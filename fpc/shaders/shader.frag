@@ -1,7 +1,3 @@
-#version 450
-
-#include "fluo.glsl"
-
 layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 out_color;

@@ -1,11 +1,11 @@
-import camera
 import fluo/mesh
 import fluo/render
 import fluo/texture
 import fluo/window.{Context}
+import fpc/camera
+import fpc/transform.{Transform}
 import gleam/int
 import gleam/list
-import transform.{Transform}
 
 const width = 800
 
@@ -33,7 +33,11 @@ pub fn main() {
   let texture = texture.load_texture("assets/brick.jpeg")
 
   let renderer =
-    render.create_renderer(#(texture), vert: "vert.spv", frag: "frag.spv")
+    render.create_renderer(
+      vert: "shader.vert",
+      frag: "shader.frag",
+      material: #(texture),
+    )
 
   let axis = fn(neg: Bool, pos: Bool) -> Float {
     case neg, pos {

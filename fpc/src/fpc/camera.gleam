@@ -1,7 +1,7 @@
+import fpc/matrix.{type Matrix, at}
+import fpc/transform.{type Transform, Transform}
 import gleam/list
 import gleam_community/maths.{cos, sin, tan}
-import matrix.{type Matrix, at}
-import transform.{type Transform, Transform}
 
 pub type Camera {
   Camera(
