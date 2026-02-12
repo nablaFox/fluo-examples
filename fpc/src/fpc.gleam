@@ -7,9 +7,9 @@ import gleam/int
 import gleam/list
 import transform.{Transform}
 
-const width = 1920
+const width = 800
 
-const height = 1080
+const height = 600
 
 const speed = 6.0
 
@@ -32,7 +32,8 @@ pub fn main() {
 
   let texture = texture.load_texture("assets/brick.jpeg")
 
-  let renderer = render.create_renderer(vert: "vert.spv", frag: "frag.spv")
+  let renderer =
+    render.create_renderer(#(texture), vert: "vert.spv", frag: "frag.spv")
 
   let axis = fn(neg: Bool, pos: Bool) -> Float {
     case neg, pos {
@@ -73,7 +74,7 @@ pub fn main() {
     _ -> Nil
   }
 
-  ctx.draw(renderer, suzanne, #(texture, camera.viewproj |> list.flatten))
+  ctx.draw(renderer, suzanne, #(camera.viewproj |> list.flatten))
 
   camera
 }
