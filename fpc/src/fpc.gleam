@@ -3,7 +3,7 @@ import fluo/render
 import fluo/texture
 import fluo/window.{Context}
 import fpc/camera
-import fpc/transform.{Transform}
+import fpc/transform
 import gleam/int
 import gleam/list
 
@@ -15,15 +15,16 @@ const speed = 6.0
 
 const sensitivity = 0.06
 
+const rotspeed = 90.0
+
 pub fn main() {
   let camera =
     camera.create_camera(
       fov: 70.0,
       near: 0.1,
       far: 100.0,
+      transform: transform.origin(),
       aspect: int.to_float(width) /. int.to_float(height),
-      position: Transform(0.0, 0.0, 3.0),
-      rotation: Transform(0.0, 0.0, 0.0),
     )
 
   let window = window.create_window("Fluo Window", width, height)
@@ -39,6 +40,8 @@ pub fn main() {
       material: #(texture),
     )
 
+  let transform = transform.origin() |> transform.translate_z(-3.0)
+
   let axis = fn(neg: Bool, pos: Bool) -> Float {
     case neg, pos {
       True, False -> -1.0
@@ -47,7 +50,9 @@ pub fn main() {
     }
   }
 
-  use ctx, camera <- window.loop(window, camera)
+  use ctx, state <- window.loop(window, #(camera, transform))
+
+  let #(camera, transform) = state
 
   let Context(delta:, keys_down: keys, mouse_delta:, ..) = ctx
 
@@ -78,7 +83,19 @@ pub fn main() {
     _ -> Nil
   }
 
-  ctx.draw(renderer, suzanne, #(camera.viewproj |> list.flatten))
+  let yaw_dir = axis(is_down(window.ArrowLeft), is_down(window.ArrowRight))
 
-  camera
+  let pitch_dir = axis(is_down(window.ArrowUp), is_down(window.ArrowDown))
+
+  let transform =
+    transform
+    |> transform.rotate_yaw(yaw_dir *. rotspeed *. delta)
+    |> transform.rotate_pitch(pitch_dir *. rotspeed *. delta)
+
+  ctx.draw(renderer, suzanne, #(
+    camera.viewproj |> list.flatten,
+    transform |> transform.model_matrix |> list.flatten,
+  ))
+
+  #(camera, transform)
 }

@@ -6,6 +6,10 @@ pub type Vec =
 pub type Matrix =
   List(Vec)
 
+pub type Vec3 {
+  Vec3(x: Float, y: Float, z: Float)
+}
+
 fn nth(list xs: List(a), index i: Int) -> a {
   let assert True = i >= 0 as "Index must be >= 0"
 
