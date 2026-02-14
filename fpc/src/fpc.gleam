@@ -1,7 +1,8 @@
+import fluo/key.{type Key}
 import fluo/mesh
-import fluo/render
-import fluo/texture
-import fluo/window.{Context}
+import fluo/renderer.{type Renderer}
+import fluo/texture.{type Texture}
+import fluo/window.{Context, drawer}
 import fpc/camera
 import fpc/transform
 import gleam/int
@@ -20,7 +21,7 @@ const rotspeed = 90.0
 pub fn main() {
   let camera =
     camera.create_camera(
-      fov: 70.0,
+      fov: 45.0,
       near: 0.1,
       far: 100.0,
       transform: transform.origin(),
@@ -29,15 +30,19 @@ pub fn main() {
 
   let window = window.create_window("Fluo Window", width, height)
 
-  let suzanne = mesh.load_obj("assets/suzanne.obj")
+  let suzanne = mesh.load_obj("assets/cube.obj")
 
-  let texture = texture.load_texture("assets/brick.jpeg")
+  let texture = texture.load_texture("assets/white.jpeg")
 
-  let renderer =
-    render.create_renderer(
+  let renderer: Renderer(
+    #(List(Float), Float, Texture),
+    List(Float),
+    List(Float),
+  ) =
+    renderer.create_renderer(
       vert: "shader.vert",
-      frag: "shader.frag",
-      material: #(texture),
+      frag: "outline.frag",
+      material: #([0.0, 0.0, 0.0, 1.0], 0.01, texture),
     )
 
   let transform = transform.origin() |> transform.translate_z(-3.0)
@@ -56,13 +61,13 @@ pub fn main() {
 
   let Context(delta:, keys_down: keys, mouse_delta:, ..) = ctx
 
-  let is_down = fn(k: window.Key) { keys |> list.contains(k) }
+  let is_down = fn(key: Key) { keys |> list.contains(key) }
 
-  let strafe = axis(is_down(window.KeyA), is_down(window.KeyD))
+  let strafe = axis(is_down(key.A), is_down(key.D))
 
-  let forward = axis(is_down(window.KeyS), is_down(window.KeyW))
+  let forward = axis(is_down(key.S), is_down(key.W))
 
-  let vertical = axis(is_down(window.LShift), is_down(window.Space))
+  let vertical = axis(is_down(key.LShift), is_down(key.Space))
 
   let camera = case mouse_delta {
     window.Position(x, y) ->
@@ -78,24 +83,24 @@ pub fn main() {
     |> camera.move_up(vertical *. speed *. delta)
 
   case ctx.keys_down {
-    [window.Enter] -> ctx.capture_mouse()
-    [window.Escape] -> ctx.release_mouse()
+    [key.Enter] -> ctx.capture_mouse()
+    [key.Escape] -> ctx.release_mouse()
     _ -> Nil
   }
 
-  let yaw_dir = axis(is_down(window.ArrowLeft), is_down(window.ArrowRight))
+  let yaw_dir = axis(is_down(key.Left), is_down(key.Right))
 
-  let pitch_dir = axis(is_down(window.ArrowUp), is_down(window.ArrowDown))
+  let pitch_dir = axis(is_down(key.Up), is_down(key.Down))
 
   let transform =
     transform
     |> transform.rotate_yaw(yaw_dir *. rotspeed *. delta)
     |> transform.rotate_pitch(pitch_dir *. rotspeed *. delta)
 
-  ctx.draw(renderer, suzanne, #(
-    camera.viewproj |> list.flatten,
-    transform |> transform.model_matrix |> list.flatten,
-  ))
+  let viewproj = camera.viewproj |> list.flatten
+  let model = transform |> transform.model_matrix |> list.flatten
+
+  suzanne |> drawer(ctx, renderer, viewproj)(model)
 
   #(camera, transform)
 }
