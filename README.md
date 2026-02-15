@@ -1,7 +1,4 @@
-# Fluo Examples
+## First Person Camera
 
-A collection of example applications built using [Fluo](https://gitub.com/nablaFox/Fluo).
-
-- first person camera
-- objects loading with phong shading
-- rendering graph & shadows
+- first person camera 
+- phong model loading
