@@ -11,8 +11,6 @@ const width = 800
 
 const height = 800
 
-const speed = 5.0
-
 pub fn main() {
   let camera =
     camera.create_camera(
@@ -23,22 +21,19 @@ pub fn main() {
       aspect: int.to_float(width) /. int.to_float(height),
     )
 
-  let window = window.create_window("Fluo Window", width, height)
-
   let car = loader.load(transform.origin, "assets/car.obj")
 
-  let light = model.Light(direction: Vec3(0.0, 1.0, 0.0), color: color.white)
+  let light = model.Light(direction: Vec3(0.5, 1.0, 0.0), color: color.white)
+
+  let window = window.create_window("Fluo Window", width, height)
+
+  window.capture_mouse(window)
 
   let ambient = color.gray
 
-  use ctx, #(camera, angle) <- window.loop(window, #(camera, 0.0))
+  use ctx, camera <- window.loop(window, camera)
 
-  car
-  |> model.rotate_yaw(angle)
-  |> model.draw(camera:, light:, ambient:, ctx:)
+  model.draw(car, camera:, light:, ambient:, ctx:)
 
-  #(
-    camera.first_person_control(camera, ctx, speed: 5.0, sensitivity: 0.1),
-    angle +. ctx.delta *. speed,
-  )
+  camera.first_person_control(camera, ctx, speed: 10.0, sensitivity: 0.1)
 }

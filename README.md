@@ -1,4 +1,15 @@
-## First Person Camera
+# Fluo Examples
 
-- first person camera 
-- phong model loading
+Collection of demos built with [Fluo](https://github.com/nablaFox/Fluo), a functional vulkan renderer written in C.
+
+### First Person Camera
+
+![demo screenshot](./screenshots/camera.png)
+
+source: [src/camera/demo.gleam](./src/camera/demo.gleam)
+
+### Phong Model Loading
+
+![demo screenshot](./screenshots/phong.png)
+
+source: [src/phong/demo.gleam](./src/phong/demo.gleam)

@@ -5,6 +5,7 @@ import gleam/dict.{type Dict}
 import gleam/float
 import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import phong/model.{type PhongMaterial, PhongMaterial}
@@ -17,7 +18,7 @@ type Obj {
     normals: Dict(Int, Vec3),
     uvs: Dict(Int, Vec2),
     faces: List(ObjFace),
-    mtllib: String,
+    mtllib: Option(String),
   )
 }
 
@@ -40,7 +41,10 @@ pub fn load(transform: transform.Transform, path: String) -> model.PhongModel {
 
   let mesh = load_meshes(obj)
 
-  let materials = load_materials(obj, dict.new(), dict.new())
+  let materials = case obj.mtllib {
+    Some(mtllib) -> load_materials(mtllib, dict.new(), dict.new())
+    None -> dict.new()
+  }
 
   let vertices_count =
     list.fold(mesh, 0, fn(acc, obj) { acc + obj.vertices_count })
@@ -63,12 +67,13 @@ fn load_drawables(
   meshes: List(ObjMesh),
   materials: Dict(String, PhongMaterial),
 ) -> List(model.Drawable) {
+  let default_material = model.create_default_material()
+
   use obj <- list.map(meshes)
 
   let ObjMesh(material:, vertices:, indices:, ..) = obj
 
-  let assert Ok(material) = dict.get(materials, material)
-    as { "Material not found: " <> material }
+  let material = result.unwrap(dict.get(materials, material), default_material)
 
   let renderer = model.create_phong_renderer(material)
 
@@ -78,12 +83,11 @@ fn load_drawables(
 }
 
 fn load_materials(
-  obj: Obj,
+  mtllib: String,
   materials: Dict(String, PhongMaterial),
   textures: Dict(String, texture.Texture),
 ) -> Dict(String, PhongMaterial) {
-  let assert Ok(content) = simplifile.read(obj.mtllib)
-    as "Failed to read MTL file"
+  let assert Ok(content) = simplifile.read(mtllib) as "Failed to read MTL file"
 
   let assert [_, ..chunks] = string.split(content, "newmtl ")
     as "Failed to parse MTL file"
@@ -99,7 +103,6 @@ fn load_materials(
     use mat, line <- list.fold(prop_lines, default_mat)
 
     case string.trim(line) {
-      "Ka " <> rest -> PhongMaterial(..mat, ambient: parse_color(rest))
       "Kd " <> rest -> PhongMaterial(..mat, diffuse: parse_color(rest))
       "Ks " <> rest -> PhongMaterial(..mat, specular: parse_color(rest))
       "Ke " <> rest -> PhongMaterial(..mat, emissive: parse_color(rest))
@@ -180,7 +183,7 @@ fn load_obj(path: String) -> Obj {
       positions: dict.new(),
       normals: dict.new(),
       uvs: dict.new(),
-      mtllib: "",
+      mtllib: None,
       faces: [],
     )
 
@@ -188,6 +191,7 @@ fn load_obj(path: String) -> Obj {
 
   case line {
     "" -> state
+
     "#" <> _ -> state
 
     "v " <> rest -> {
@@ -215,7 +219,10 @@ fn load_obj(path: String) -> Obj {
     }
 
     "f " <> rest -> {
-      let assert [face, ..others] = state.faces as "Failed to parse face"
+      let #(face, others) = case state.faces {
+        [face, ..others] -> #(face, others)
+        [] -> #(ObjFace("", []), [])
+      }
 
       let parse = fn(i) { int.parse(i) |> result.unwrap(0) }
 
@@ -253,7 +260,8 @@ fn load_obj(path: String) -> Obj {
       Obj(..state, faces: [face, ..state.faces])
     }
 
-    "mtllib " <> rest -> Obj(..state, mtllib: dir <> "/" <> string.trim(rest))
+    "mtllib " <> rest ->
+      Obj(..state, mtllib: Some(dir <> "/" <> string.trim(rest)))
     _ -> state
   }
 }
@@ -271,26 +279,27 @@ fn parse_float(s: String) -> Float {
 }
 
 fn parse_vec3(s: String) -> Vec3 {
-  case string.split(string.trim(s), " ") {
-    [x, y, z, ..] -> {
-      let x = parse_float(x)
-      let y = parse_float(y)
-      let z = parse_float(z)
+  let parts =
+    s
+    |> string.trim
+    |> string.split(" ")
+    |> list.filter(fn(p) { p != "" })
 
-      mesh.Vec3(x, y, z)
-    }
+  case parts {
+    [x, y, z, ..] -> mesh.Vec3(parse_float(x), parse_float(y), parse_float(z))
     _ -> panic as "Failed to parse Vec3"
   }
 }
 
 fn parse_vec2(s: String) -> Vec2 {
-  case string.split(string.trim(s), " ") {
-    [x, y, ..] -> {
-      let x = parse_float(x)
-      let y = parse_float(y)
+  let s =
+    s
+    |> string.trim
+    |> string.split(" ")
+    |> list.filter(fn(p) { p != "" })
 
-      mesh.Vec2(x, y)
-    }
+  case s {
+    [x, y, ..] -> mesh.Vec2(parse_float(x), parse_float(y))
     _ -> panic as "Failed to parse Vec2"
   }
 }

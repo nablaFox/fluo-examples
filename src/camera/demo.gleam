@@ -40,15 +40,17 @@ pub fn main() {
     renderer.create_renderer(
       vert: "shader.vert",
       frag: "outline.frag",
-      material: #([0.0, 0.0, 0.0, 1.0], 0.05, texture),
+      material: #([0.0, 0.0, 0.0, 1.0], 0.01, texture),
     )
+
+  window.capture_mouse(window)
 
   use ctx, state <- window.loop(window, #(camera, transform.origin))
 
   let #(camera, transform) = state
 
   case ctx.keys_down {
-    [key.Enter] -> ctx.capture_mouse()
+    [key.Enter] -> ctx.screenshot("screenshots/camera.png")
     [key.Escape] -> ctx.release_mouse()
     _ -> Nil
   }

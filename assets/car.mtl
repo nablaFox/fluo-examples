@@ -138,7 +138,7 @@ newmtl SeatColor
 	Tf 1.0000 1.0000 1.0000 
 	illum 2
 	Kd 0.784 0.235 0.078
-    Ks 0.02 0.02 0.02
+  Ks 0.02 0.02 0.02
 
 newmtl Seat_Black
 	Ns 20.0000

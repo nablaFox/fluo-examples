@@ -3,16 +3,15 @@ layout(location = 1) in vec3 world_pos;
 layout(location = 2) in vec3 world_normal;
 
 DEF_MATERIAL({
-    uint albedo;        
-    vec3 kd;
-    vec3 ks;
-    vec3 ka;
-    vec3 ke;
-    vec3 tf;
+    uint  albedo;
+    vec3  diffuse;
+    vec3  specular;
+    vec3  emissive;
+    vec3  trasmission_filter;
     float shininess;
-    float d;
-    float ni;          
-    int illum;
+    float opacity;
+    float ior;
+    int   illum;
 });
 
 DEF_FRAME_PARAMS({
@@ -32,17 +31,15 @@ void main() {
     vec3 albedo = TEXTURE(MATERIAL.albedo, uv).rgb;
 
     if (MATERIAL.illum == 0) {
-        out_color = vec4(albedo * MATERIAL.kd, MATERIAL.d);
+        out_color = vec4(albedo * MATERIAL.diffuse, MATERIAL.opacity);
         return;
     }
 
     float NdotL = max(dot(N, L), 0.0);
 
-    vec3 diffuse = albedo * MATERIAL.kd * NdotL * F_PARAMS.light_color;
+    vec3 diffuse = albedo * MATERIAL.diffuse * NdotL * F_PARAMS.light_color;
 
-    vec3 ambient = albedo * MATERIAL.ka * F_PARAMS.ambient;
-
-    vec3 emissive = MATERIAL.ke;
+    vec3 ambient = albedo * F_PARAMS.ambient;
 
     vec3 specular = vec3(0.0);
 
@@ -50,15 +47,15 @@ void main() {
         vec3 H = normalize(L + V);
         float NdotH = max(dot(N, H), 0.0);
         float spec = (NdotL > 0.0) ? pow(NdotH, MATERIAL.shininess) : 0.0;
-        specular = MATERIAL.ks * spec * F_PARAMS.light_color;
+        specular = MATERIAL.specular * spec * F_PARAMS.light_color;
     }
 
-    vec3 color = ambient + diffuse + specular + emissive;
+    vec3 color = ambient + diffuse + specular + MATERIAL.emissive;
 
-    float alpha = MATERIAL.d;
+    float alpha = MATERIAL.opacity;
 
     if (alpha < 1.0) {
-        color *= MATERIAL.tf;
+        color *= MATERIAL.trasmission_filter;
     }
 
     out_color = vec4(color, alpha);

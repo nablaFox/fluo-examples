@@ -22,7 +22,6 @@ pub type PhongMaterial {
     albedo: Texture,
     diffuse: Color,
     specular: Color,
-    ambient: Color,
     emissive: Color,
     transmission_filter: Color,
     shininess: Float,
@@ -65,7 +64,7 @@ pub fn create_frame_params(
     model: model_transform |> transform.to_matrix |> list.flatten,
     light_dir: light.direction,
     light_color: light.color,
-    ambient_color: ambient,
+    ambient_color: color.multiply(ambient, 0.01),
     camera_pos: camera.position(camera),
   )
 }
@@ -134,14 +133,13 @@ pub fn rotate_roll(model: PhongModel, deg_z: Float) -> PhongModel {
 }
 
 pub fn create_default_material() -> PhongMaterial {
-  let white: Texture = texture.create_from_color(color.white)
+  let albedo: Texture = texture.create_from_color(color.Color(0.8, 0.8, 0.8))
 
   PhongMaterial(
-    albedo: white,
-    diffuse: color.white,
-    specular: color.white,
-    ambient: color.gray,
-    emissive: color.black,
+    albedo: albedo,
+    diffuse: color.Color(1.0, 1.0, 1.0),
+    specular: color.Color(0.04, 0.04, 0.04),
+    emissive: color.multiply(color.white, 0.1),
     transmission_filter: color.white,
     shininess: 32.0,
     dissolve: 1.0,
