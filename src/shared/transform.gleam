@@ -1,5 +1,6 @@
-import fpc/matrix.{type Matrix, type Vec3, Vec3, at}
 import gleam_community/maths.{cos, degrees_to_radians, sin}
+import shared/matrix.{type Matrix, at}
+import shared/vector.{type Vec3, Vec3}
 
 pub type Transform {
   Transform(
@@ -13,9 +14,7 @@ pub type Transform {
   )
 }
 
-pub fn origin() -> Transform {
-  Transform(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
-}
+pub const origin = Transform(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
 
 pub fn translate(
   transform: Transform,
@@ -33,9 +32,9 @@ pub fn translate(
 
 pub fn rotate(
   transform: Transform,
-  pitch: Float,
-  yaw: Float,
-  roll: Float,
+  pitch pitch: Float,
+  yaw yaw: Float,
+  roll roll: Float,
 ) -> Transform {
   let pitch = degrees_to_radians(pitch)
   let yaw = degrees_to_radians(yaw)
@@ -139,7 +138,7 @@ pub fn scale_matrix(transform: Transform) -> Matrix {
   ]
 }
 
-pub fn model_matrix(transform: Transform) -> Matrix {
+pub fn to_matrix(transform: Transform) -> Matrix {
   let scale = scale_matrix(transform)
   let trans = trans_matrix(transform)
 
@@ -182,4 +181,9 @@ pub fn right(transform: Transform) -> Vec3 {
 pub fn forward(transform: Transform) -> Vec3 {
   let #(forward, _, _) = basis(transform)
   forward
+}
+
+pub fn position(transform: Transform) -> Vec3 {
+  let Transform(x, y, z, ..) = transform
+  Vec3(x, y, z)
 }

@@ -1,6 +1,9 @@
-import fpc/matrix.{type Matrix, type Vec3}
-import fpc/transform.{type Transform}
+import fluo/key
+import fluo/window
 import gleam_community/maths.{tan}
+import shared/matrix.{type Matrix}
+import shared/transform.{type Transform}
+import shared/vector.{type Vec3}
 
 pub type Camera {
   Camera(
@@ -109,4 +112,38 @@ pub fn move_right(camera: Camera, amount: Float) -> Camera {
 
 pub fn move_up(camera: Camera, amount: Float) -> Camera {
   camera |> move(camera.up, amount)
+}
+
+pub fn position(camera: Camera) -> Vec3 {
+  transform.position(camera.transform)
+}
+
+pub fn first_person_control(
+  camera: Camera,
+  ctx: window.Context,
+  sensitivity sensitivity: Float,
+  speed speed: Float,
+) -> Camera {
+  let window.Context(delta:, mouse_delta:, ..) = ctx
+
+  let strafe = ctx.axis(key.A, key.D)
+
+  let forward = ctx.axis(key.S, key.W)
+
+  let vertical = ctx.axis(key.LShift, key.Space)
+
+  let camera = case mouse_delta {
+    window.Position(x, y) ->
+      camera
+      |> pitch(y *. sensitivity)
+      |> yaw(x *. sensitivity)
+  }
+
+  let camera =
+    camera
+    |> move_right(strafe *. speed *. delta)
+    |> move_forward(forward *. speed *. delta)
+    |> move_up(vertical *. speed *. delta)
+
+  camera
 }

@@ -1,14 +1,14 @@
 import gleam/list
-
-pub type Vec =
-  List(Float)
+import shared/vector.{type Vec}
 
 pub type Matrix =
   List(Vec)
 
-pub type Vec3 {
-  Vec3(x: Float, y: Float, z: Float)
-}
+pub type ModelMatrix =
+  List(Float)
+
+pub type ViewProjMatrix =
+  List(Float)
 
 fn nth(list xs: List(a), index i: Int) -> a {
   let assert True = i >= 0 as "Index must be >= 0"
@@ -26,15 +26,6 @@ pub fn at(m: Matrix, row: Int, col: Int) -> Float {
   |> nth(col)
 }
 
-fn dot(a: Vec, b: Vec) -> Float {
-  let assert Ok(list) = list.strict_zip(a, b)
-    as "Vectors must be the same length"
-
-  use acc, el <- list.fold(list, 0.0)
-
-  acc +. el.0 *. el.1
-}
-
 pub fn multiply(a: Matrix, b: Matrix) -> Matrix {
   case a, b {
     [], _ -> []
@@ -49,7 +40,7 @@ pub fn multiply(a: Matrix, b: Matrix) -> Matrix {
       use row <- list.map(a)
       use col <- list.map(cols)
 
-      dot(row, col)
+      vector.dot(row, col)
     }
   }
 }
