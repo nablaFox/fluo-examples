@@ -26,7 +26,8 @@ pub fn main() {
       aspect: int.to_float(width) /. int.to_float(height),
     )
 
-  let window = window.create_window("Fluo Window", width, height)
+  let window =
+    window.create_window("Fluo Window", width, height, captured: True)
 
   let cube = geometry.create_cube()
 
@@ -42,8 +43,6 @@ pub fn main() {
       frag: "outline.frag",
       material: #([0.0, 0.0, 0.0, 1.0], 0.01, texture),
     )
-
-  window.capture_mouse(window)
 
   use ctx, state <- window.loop(window, #(camera, transform.origin))
 

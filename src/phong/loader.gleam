@@ -36,7 +36,7 @@ type ObjMesh {
   )
 }
 
-pub fn load(transform: transform.Transform, path: String) -> model.PhongModel {
+pub fn load(path: String, transform: transform.Transform) -> model.PhongModel {
   let obj = load_obj(path)
 
   let mesh = load_meshes(obj)
