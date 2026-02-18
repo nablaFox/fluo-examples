@@ -4,7 +4,8 @@ import fluo/window
 import gleam/function
 import gleam/int
 import phong/loader
-import phong/model
+import phong/phong
+import shared/light
 import shared/transform
 import shared/vector.{Vec3}
 
@@ -24,14 +25,14 @@ pub fn main() {
 
   let car = loader.load("assets/car.obj", transform.origin)
 
-  let light = model.Light(direction: Vec3(0.5, 1.0, 0.0), color: color.white)
+  let light = light.Light(direction: Vec3(0.5, 1.0, 0.0), color: color.white)
 
   let window =
     window.create_window("Fluo Window", width, height, captured: True)
 
   use ctx, camera <- window.loop(window, camera)
 
-  model.draw(car, function.identity, camera:, light:, ambient: color.gray, ctx:)
+  phong.draw(car, function.identity, camera:, light:, ambient: color.gray, ctx:)
 
   camera.first_person_control(camera, ctx, speed: 5.0, sensitivity: 0.1)
 }

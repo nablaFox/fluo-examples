@@ -35,8 +35,8 @@ pub fn main() {
 
   let renderer: Renderer(
     #(List(Float), Float, Texture),
-    matrix.RawMatrix,
-    matrix.RawMatrix,
+    Nil,
+    #(matrix.RawMatrix, matrix.RawMatrix),
   ) =
     renderer.create_renderer(
       vert: "shader.vert",
@@ -57,26 +57,28 @@ pub fn main() {
     |> transform.rotate_yaw(yaw_dir *. speed *. ctx.delta)
     |> transform.rotate_pitch(pitch_dir *. speed *. ctx.delta)
 
-  let draw = drawer(ctx, renderer, camera.viewproj |> list.flatten)
+  let draw = drawer(ctx, renderer, Nil)
 
   let range = int.range(list.prepend, from: -1, to: 2, with: [])
 
   let camera =
     camera.first_person_control(camera, ctx, sensitivity: 0.1, speed: 5.0)
 
+  let viewproj = camera.viewproj |> list.flatten
+
   {
     use x <- list.map(range)
 
     use y <- list.map(range)
 
-    draw(
-      cube,
+    let model =
       transform
-        |> transform.translate_x(int.to_float(x) *. 1.5)
-        |> transform.translate_y(int.to_float(y) *. 1.5)
-        |> transform.to_matrix
-        |> list.flatten,
-    )
+      |> transform.translate_x(int.to_float(x) *. 1.5)
+      |> transform.translate_y(int.to_float(y) *. 1.5)
+      |> transform.to_matrix
+      |> list.flatten
+
+    draw(cube, #(viewproj, model))
   }
 
   #(camera, transform)

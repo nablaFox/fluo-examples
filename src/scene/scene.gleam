@@ -1,21 +1,29 @@
 import camera/camera.{type Camera}
-import fluo/color
 import fluo/geometry
+import fluo/mesh
+import fluo/renderer.{type Renderer}
 import fluo/window
 import gleam/dict
 import gleam/function
 import gleam/list
-import phong/loader
-import phong/model
-import shared/transform
-import shared/vector
+import shared/matrix
+import shared/model.{type Model}
+import shared/transform.{type Transform}
 
-pub type Scene {
+pub type ModelMatrix =
+  matrix.RawMatrix
+
+pub type ViewProjMatrix =
+  matrix.RawMatrix
+
+pub type SceneDrawParams =
+  #(ModelMatrix, ViewProjMatrix)
+
+pub type Scene(frame_params) {
   Scene(
     camera: Camera,
-    light: model.Light,
-    ambient: color.Color,
-    models: dict.Dict(String, model.PhongModel),
+    params: frame_params,
+    models: dict.Dict(String, Model(frame_params, SceneDrawParams)),
   )
 }
 
@@ -24,10 +32,8 @@ pub fn create(
   near near: Float,
   far far: Float,
   aspect aspect: Float,
-  camera_transform camera_transform: transform.Transform,
-  light_dir light_dir: vector.Vec3,
-  light_color light_color: color.Color,
-  ambient ambient: color.Color,
+  camera_transform camera_transform: Transform,
+  params params: params,
 ) {
   let camera =
     camera.create_camera(
@@ -38,94 +44,112 @@ pub fn create(
       aspect: aspect,
     )
 
-  let light = model.Light(direction: light_dir, color: light_color)
-
-  Scene(camera, light, ambient, dict.new())
+  Scene(camera, params, dict.new())
 }
 
-pub fn draw_model(
-  scene: Scene,
-  model model_name: String,
-  transformer transformer: fn(transform.Transform) -> transform.Transform,
-  ctx ctx: window.Context,
-) -> Scene {
-  let Scene(camera, light, ambient, models) = scene
-
-  let assert Ok(model) = dict.get(models, model_name)
-    as { "Tried to draw model that does not exist: " <> model_name }
-
-  model.draw(model:, camera:, light:, ambient:, transformer:, ctx:)
-
-  scene
-}
-
-pub fn draw(scene: Scene, ctx ctx: window.Context) -> Scene {
+pub fn draw(scene: Scene(params), ctx ctx: window.Context) -> Scene(params) {
   let Scene(models:, ..) = scene
 
   {
     use model <- list.each(dict.keys(models))
-
     draw_model(scene, model, function.identity, ctx)
   }
 
   scene
 }
 
+pub fn draw_model(
+  scene: Scene(params),
+  model model_name: String,
+  transformer transformer: fn(Transform) -> Transform,
+  ctx ctx: window.Context,
+) -> Scene(params) {
+  let Scene(params:, models:, camera:) = scene
+
+  let assert Ok(model) = dict.get(models, model_name)
+    as { "Tried to draw model that does not exist: " <> model_name }
+
+  let viewproj = camera.viewproj |> list.flatten
+
+  let model_matrix =
+    model.transform
+    |> transformer
+    |> transform.to_matrix
+    |> list.flatten
+
+  model.draw(model, params, #(viewproj, model_matrix), ctx)
+
+  scene
+}
+
 pub fn update_camera_fpc(
-  scene: Scene,
+  scene: Scene(params),
   ctx: window.Context,
   speed speed: Float,
   sensitivity sensitivity: Float,
-) -> Scene {
+) -> Scene(params) {
   let camera =
     camera.first_person_control(scene.camera, ctx, speed:, sensitivity:)
 
   Scene(..scene, camera:)
 }
 
-pub fn load_model(
-  scene: Scene,
-  name name: String,
-  path path: String,
-  transform transform: transform.Transform,
-) -> Scene {
-  let model = loader.load(path, transform)
-  add_model(scene, name, model, function.identity)
-}
-
 pub fn add_model(
-  scene: Scene,
+  scene: Scene(params),
   name: String,
-  model: model.PhongModel,
-  transformer: fn(transform.Transform) -> transform.Transform,
-) -> Scene {
+  model: Model(params, SceneDrawParams),
+  transformer: fn(transform.Transform) -> Transform,
+) -> Scene(params) {
   let transform = model.transform |> transformer
 
-  let model = model.PhongModel(..model, transform:)
+  let model = model.Model(..model, transform:)
 
   let models = dict.insert(scene.models, name, model)
 
   Scene(..scene, models:)
 }
 
-pub fn add_shape(
-  scene: Scene,
+pub fn create_model(
+  scene: Scene(params),
   name: String,
-  geometry: geometry.Geometry,
-  color: color.Color,
+  mesh: mesh.Mesh,
+  renderer: Renderer(material, params, SceneDrawParams),
   transform: transform.Transform,
-) -> Scene {
-  let model = model.create_shape(geometry, color, transform)
+) -> Scene(params) {
+  let model = model.create(mesh, renderer, transform)
+
+  add_model(scene, name, model, function.identity)
+}
+
+pub fn add_shape(
+  scene: Scene(params),
+  name: String,
+  shape: geometry.Geometry,
+  renderer: Renderer(material, params, SceneDrawParams),
+  transform: transform.Transform,
+) -> Scene(params) {
+  let model = model.create(geometry.to_mesh(shape), renderer, transform)
+  add_model(scene, name, model, function.identity)
+}
+
+pub fn create_shape(
+  scene: Scene(params),
+  name: String,
+  shape: geometry.Geometry,
+  renderer: Renderer(material, params, SceneDrawParams),
+  transform: transform.Transform,
+) -> Scene(params) {
+  let model = model.create_shape(shape, renderer, transform)
   add_model(scene, name, model, function.identity)
 }
 
 pub fn translate(
-  scene: Scene,
+  scene: Scene(params),
   model model_name: String,
   x x: Float,
   y y: Float,
   z z: Float,
-) -> Scene {
+) -> Scene(params) {
   let model = dict.get(scene.models, model_name)
 
   case model {
@@ -140,12 +164,12 @@ pub fn translate(
 }
 
 pub fn rotate(
-  scene: Scene,
+  scene: Scene(params),
   model model_name: String,
   pitch pitch: Float,
   yaw yaw: Float,
   roll roll: Float,
-) -> Scene {
+) -> Scene(params) {
   let model = dict.get(scene.models, model_name)
 
   case model {
@@ -159,26 +183,50 @@ pub fn rotate(
   }
 }
 
-pub fn rotate_pitch(scene: Scene, model: String, pitch: Float) -> Scene {
+pub fn rotate_pitch(
+  scene: Scene(params),
+  model: String,
+  pitch: Float,
+) -> Scene(params) {
   rotate(scene, model, pitch, 0.0, 0.0)
 }
 
-pub fn rotate_yaw(scene: Scene, model: String, yaw: Float) -> Scene {
+pub fn rotate_yaw(
+  scene: Scene(params),
+  model: String,
+  yaw: Float,
+) -> Scene(params) {
   rotate(scene, model, 0.0, yaw, 0.0)
 }
 
-pub fn rotate_roll(scene: Scene, model: String, roll: Float) -> Scene {
+pub fn rotate_roll(
+  scene: Scene(params),
+  model: String,
+  roll: Float,
+) -> Scene(params) {
   rotate(scene, model, 0.0, 0.0, roll)
 }
 
-pub fn translate_x(scene: Scene, model: String, x: Float) -> Scene {
+pub fn translate_x(
+  scene: Scene(params),
+  model: String,
+  x: Float,
+) -> Scene(params) {
   translate(scene, model, x, 0.0, 0.0)
 }
 
-pub fn translate_y(scene: Scene, model: String, y: Float) -> Scene {
+pub fn translate_y(
+  scene: Scene(params),
+  model: String,
+  y: Float,
+) -> Scene(params) {
   translate(scene, model, 0.0, y, 0.0)
 }
 
-pub fn translate_z(scene: Scene, model: String, z: Float) -> Scene {
+pub fn translate_z(
+  scene: Scene(params),
+  model: String,
+  z: Float,
+) -> Scene(params) {
   translate(scene, model, 0.0, 0.0, z)
 }

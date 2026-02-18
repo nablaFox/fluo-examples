@@ -15,7 +15,6 @@ DEF_MATERIAL({
 });
 
 DEF_FRAME_PARAMS({
-    mat4 viewproj;
     vec3 camera_pos;
     vec3 light_dir;
     vec3 light_color;

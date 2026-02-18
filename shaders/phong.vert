@@ -2,11 +2,8 @@ layout(location = 0) out vec2 frag_uv;
 layout(location = 1) out vec3 frag_world_pos;
 layout(location = 2) out vec3 frag_world_normal;
 
-DEF_FRAME_PARAMS({
-  mat4 viewproj;
-});
-
 DEF_DRAW_PARAMS({
+  mat4 viewproj;
   mat4 model;
 });
 
@@ -17,7 +14,7 @@ void main() {
     mat3 normal_mat = transpose(inverse(mat3(D_PARAMS.model)));
     frag_world_normal = normalize(normal_mat * in_normal);
 
-    gl_Position = F_PARAMS.viewproj * world_pos4;
+    gl_Position = D_PARAMS.viewproj * world_pos4;
 
     frag_uv = in_uv;
 }

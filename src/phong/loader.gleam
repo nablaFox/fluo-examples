@@ -8,7 +8,8 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import phong/model.{type PhongMaterial, PhongMaterial}
+import phong/phong.{type PhongMaterial, type PhongModel, PhongMaterial}
+import shared/model
 import shared/transform
 import simplifile
 
@@ -36,7 +37,7 @@ type ObjMesh {
   )
 }
 
-pub fn load(path: String, transform: transform.Transform) -> model.PhongModel {
+pub fn load(path: String, transform: transform.Transform) -> PhongModel {
   let obj = load_obj(path)
 
   let mesh = load_meshes(obj)
@@ -59,15 +60,15 @@ pub fn load(path: String, transform: transform.Transform) -> model.PhongModel {
       materials,
     ))
 
-  model.PhongModel(drawables, transform)
+  model.Model(drawables, transform)
 }
 
 fn load_drawables(
   allocate: mesh.Allocator,
   meshes: List(ObjMesh),
   materials: Dict(String, PhongMaterial),
-) -> List(model.Drawable) {
-  let default_material = model.create_default_material()
+) -> List(phong.PhongDrawable) {
+  let default_material = phong.create_default_material()
 
   use obj <- list.map(meshes)
 
@@ -75,11 +76,11 @@ fn load_drawables(
 
   let material = result.unwrap(dict.get(materials, material), default_material)
 
-  let renderer = model.create_phong_renderer(material)
+  let renderer = phong.create_renderer(material)
 
   let mesh = allocate(vertices, indices)
 
-  model.Drawable(mesh, renderer)
+  model.create_drawable(mesh, renderer)
 }
 
 fn load_materials(
@@ -92,7 +93,7 @@ fn load_materials(
   let assert [_, ..chunks] = string.split(content, "newmtl ")
     as "Failed to parse MTL file"
 
-  let default = model.create_default_material()
+  let default = phong.create_default_material()
 
   use mats, chunk <- list.fold(chunks, materials)
 
