@@ -4,10 +4,7 @@ import shared/vector.{type Vec}
 pub type Matrix =
   List(Vec)
 
-pub type ModelMatrix =
-  List(Float)
-
-pub type ViewProjMatrix =
+pub type RawMatrix =
   List(Float)
 
 fn nth(list xs: List(a), index i: Int) -> a {

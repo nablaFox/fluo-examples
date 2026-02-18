@@ -29,11 +29,9 @@ pub fn main() {
 
   window.capture_mouse(window)
 
-  let ambient = color.gray
-
   use ctx, camera <- window.loop(window, camera)
 
-  model.draw(car, camera:, light:, ambient:, ctx:)
+  model.draw(car, camera:, light:, ambient: color.gray, ctx:)
 
-  camera.first_person_control(camera, ctx, speed: 10.0, sensitivity: 0.1)
+  camera.first_person_control(camera, ctx, speed: 5.0, sensitivity: 0.1)
 }

@@ -4,8 +4,10 @@ import fluo/mesh.{type Mesh}
 import fluo/renderer.{type Renderer}
 import fluo/texture.{type Texture}
 import fluo/window.{type Context}
+import gleam/dict
 import gleam/list
-import shared/matrix.{type ModelMatrix, type ViewProjMatrix}
+import gleam/result
+import shared/matrix.{type RawMatrix}
 import shared/transform.{type Transform}
 import shared/vector.{type Vec3}
 
@@ -23,18 +25,17 @@ pub type PhongMaterial {
     diffuse: Color,
     specular: Color,
     emissive: Color,
-    transmission_filter: Color,
+    transmission: Color,
     shininess: Float,
-    dissolve: Float,
-    refraction_index: Float,
+    opacity: Float,
+    ior: Float,
     illum: Int,
   )
 }
 
 pub opaque type PhongFrameParams {
   PhongFrameParams(
-    viewproj: ViewProjMatrix,
-    model: ModelMatrix,
+    viewproj: RawMatrix,
     camera_pos: Vec3,
     light_dir: Vec3,
     light_color: Color,
@@ -43,25 +44,23 @@ pub opaque type PhongFrameParams {
 }
 
 pub type PhongRenderer =
-  Renderer(PhongMaterial, PhongFrameParams, Nil)
+  Renderer(PhongMaterial, PhongFrameParams, RawMatrix)
 
 pub type Drawable {
   Drawable(mesh: Mesh, renderer: PhongRenderer)
 }
 
 pub type PhongModel {
-  PhongModel(List(Drawable), Transform)
+  PhongModel(drawables: List(Drawable), transform: Transform)
 }
 
 pub fn create_frame_params(
   camera: Camera,
-  model_transform: Transform,
   light: Light,
   ambient: Color,
 ) -> PhongFrameParams {
   PhongFrameParams(
     viewproj: camera.viewproj |> list.flatten,
-    model: model_transform |> transform.to_matrix |> list.flatten,
     light_dir: light.direction,
     light_color: light.color,
     ambient_color: color.multiply(ambient, 0.01),
@@ -76,14 +75,41 @@ pub fn draw(
   ambient ambient: Color,
   ctx ctx: Context,
 ) {
-  let PhongModel(drawables, transform) = model
+  let params = create_frame_params(camera, light, ambient)
 
-  let params = create_frame_params(camera, transform, light, ambient)
+  let model_matrix = model.transform |> transform.to_matrix |> list.flatten
 
-  use drawable <- list.map(drawables)
+  use drawable <- list.each(model.drawables)
 
   drawable.mesh
-  |> window.draw(ctx, drawable.renderer, params, Nil)
+  |> window.draw(ctx, drawable.renderer, params, model_matrix)
+}
+
+pub fn drawer(
+  model: PhongModel,
+  camera camera: Camera,
+  light light: Light,
+  ambient ambient: Color,
+  ctx ctx: Context,
+) -> fn(Transform) -> Nil {
+  let params = create_frame_params(camera, light, ambient)
+
+  let drawers = {
+    use drawable <- list.map(model.drawables)
+    window.drawer(ctx, drawable.renderer, params)
+  }
+
+  let drawers = dict.from_list(list.zip(model.drawables, drawers))
+
+  fn(transform: Transform) {
+    let model_matrix = transform |> transform.to_matrix |> list.flatten
+
+    use drawable <- list.each(model.drawables)
+
+    let drawer = result.unwrap(dict.get(drawers, drawable), fn(_, _) { Nil })
+
+    drawer(drawable.mesh, model_matrix)
+  }
 }
 
 pub fn translate(
@@ -133,17 +159,17 @@ pub fn rotate_roll(model: PhongModel, deg_z: Float) -> PhongModel {
 }
 
 pub fn create_default_material() -> PhongMaterial {
-  let albedo: Texture = texture.create_from_color(color.Color(0.8, 0.8, 0.8))
+  let albedo: Texture = texture.create_from_color(color.white)
 
   PhongMaterial(
     albedo: albedo,
     diffuse: color.Color(1.0, 1.0, 1.0),
     specular: color.Color(0.04, 0.04, 0.04),
-    emissive: color.multiply(color.white, 0.1),
-    transmission_filter: color.white,
+    emissive: color.black,
+    transmission: color.white,
     shininess: 32.0,
-    dissolve: 1.0,
-    refraction_index: 1.0,
+    opacity: 1.0,
+    ior: 1.0,
     illum: 2,
   )
 }

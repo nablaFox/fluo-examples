@@ -34,8 +34,8 @@ pub fn main() {
 
   let renderer: Renderer(
     #(List(Float), Float, Texture),
-    matrix.ViewProjMatrix,
-    matrix.ModelMatrix,
+    matrix.RawMatrix,
+    matrix.RawMatrix,
   ) =
     renderer.create_renderer(
       vert: "shader.vert",
@@ -48,12 +48,6 @@ pub fn main() {
   use ctx, state <- window.loop(window, #(camera, transform.origin))
 
   let #(camera, transform) = state
-
-  case ctx.keys_down {
-    [key.Enter] -> ctx.screenshot("screenshots/camera.png")
-    [key.Escape] -> ctx.release_mouse()
-    _ -> Nil
-  }
 
   let yaw_dir = ctx.axis(key.Left, key.Right)
 

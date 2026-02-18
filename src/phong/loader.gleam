@@ -92,7 +92,7 @@ fn load_materials(
   let assert [_, ..chunks] = string.split(content, "newmtl ")
     as "Failed to parse MTL file"
 
-  let default_mat = model.create_default_material()
+  let default = model.create_default_material()
 
   use mats, chunk <- list.fold(chunks, materials)
 
@@ -100,7 +100,7 @@ fn load_materials(
     as "Failed to parse MTL chunk"
 
   let mat = {
-    use mat, line <- list.fold(prop_lines, default_mat)
+    use mat, line <- list.fold(prop_lines, default)
 
     case string.trim(line) {
       "Kd " <> rest -> PhongMaterial(..mat, diffuse: parse_color(rest))
@@ -108,9 +108,9 @@ fn load_materials(
       "Ke " <> rest -> PhongMaterial(..mat, emissive: parse_color(rest))
       "illum " <> rest -> PhongMaterial(..mat, illum: parse_int(rest))
       "Ns " <> rest -> PhongMaterial(..mat, shininess: parse_float(rest))
-      "d " <> rest -> PhongMaterial(..mat, dissolve: parse_float(rest))
-      "Tf " <> rest ->
-        PhongMaterial(..mat, transmission_filter: parse_color(rest))
+      "Ni " <> rest -> PhongMaterial(..mat, ior: parse_float(rest))
+      "d " <> rest -> PhongMaterial(..mat, opacity: parse_float(rest))
+      "Tf " <> rest -> PhongMaterial(..mat, transmission: parse_color(rest))
       _ -> mat
     }
   }

@@ -7,7 +7,7 @@ DEF_MATERIAL({
     vec3  diffuse;
     vec3  specular;
     vec3  emissive;
-    vec3  trasmission_filter;
+    vec3  trasmission;
     float shininess;
     float opacity;
     float ior;
@@ -16,7 +16,6 @@ DEF_MATERIAL({
 
 DEF_FRAME_PARAMS({
     mat4 viewproj;
-    mat4 model;
     vec3 camera_pos;
     vec3 light_dir;
     vec3 light_color;
@@ -39,8 +38,6 @@ void main() {
 
     vec3 diffuse = albedo * MATERIAL.diffuse * NdotL * F_PARAMS.light_color;
 
-    vec3 ambient = albedo * F_PARAMS.ambient;
-
     vec3 specular = vec3(0.0);
 
     if (MATERIAL.illum >= 2) {
@@ -50,13 +47,11 @@ void main() {
         specular = MATERIAL.specular * spec * F_PARAMS.light_color;
     }
 
-    vec3 color = ambient + diffuse + specular + MATERIAL.emissive;
+    vec3 color = (albedo * F_PARAMS.ambient) + diffuse + specular + MATERIAL.emissive;
 
-    float alpha = MATERIAL.opacity;
-
-    if (alpha < 1.0) {
-        color *= MATERIAL.trasmission_filter;
+    if (MATERIAL.opacity < 1.0) {
+        color *= MATERIAL.trasmission;
     }
 
-    out_color = vec4(color, alpha);
+    out_color = vec4(color, MATERIAL.opacity);
 }
