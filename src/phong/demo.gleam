@@ -32,7 +32,14 @@ pub fn main() {
 
   use ctx, camera <- window.loop(window, camera)
 
-  phong.draw(car, function.identity, camera:, light:, ambient: color.gray, ctx:)
+  phong.draw(
+    car,
+    function.identity,
+    camera:,
+    light:,
+    ambient: color.black,
+    ctx:,
+  )
 
   camera.first_person_control(camera, ctx, speed: 5.0, sensitivity: 0.1)
 }

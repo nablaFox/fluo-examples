@@ -33,15 +33,11 @@ pub fn main() {
 
   let texture = texture.create_from_color(color.white)
 
-  let renderer: Renderer(
-    #(List(Float), Float, Texture),
-    Nil,
-    #(matrix.RawMatrix, matrix.RawMatrix),
-  ) =
+  let renderer =
     renderer.create_renderer(
       vert: "shader.vert",
       frag: "outline.frag",
-      material: #([0.0, 0.0, 0.0, 1.0], 0.01, texture),
+      material: #(color.black, 0.01, texture),
     )
 
   use ctx, state <- window.loop(window, #(camera, transform.origin))

@@ -31,7 +31,7 @@ pub type PhongMaterial {
   )
 }
 
-pub opaque type PhongFrameParams {
+pub type PhongFrameParams {
   PhongFrameParams(
     camera_pos: Vec3,
     light_dir: Vec3,
@@ -109,19 +109,6 @@ pub fn create_shape(
   model.create(mesh, renderer, transform)
 }
 
-fn create_frame_params(
-  camera: Camera,
-  light: Light,
-  ambient: Color,
-) -> PhongFrameParams {
-  PhongFrameParams(
-    light_dir: light.direction,
-    light_color: light.color,
-    ambient_color: ambient,
-    camera_pos: camera.position(camera),
-  )
-}
-
 pub fn create_default_material() -> PhongMaterial {
   PhongMaterial(
     albedo: texture.create_from_color(color.white),
@@ -152,7 +139,13 @@ pub fn draw(
   transformer transformer: fn(Transform) -> Transform,
   ctx ctx: window.Context,
 ) {
-  let params = create_frame_params(camera, light, ambient)
+  let params =
+    PhongFrameParams(
+      camera_pos: camera.position(camera),
+      light_dir: light.direction,
+      light_color: light.color,
+      ambient_color: ambient,
+    )
 
   let model_matrix =
     model.transform

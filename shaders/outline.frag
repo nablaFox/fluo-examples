@@ -1,7 +1,7 @@
 layout(location = 0) in vec2 uv;
 
 DEF_MATERIAL({
-    vec4 outline;
+    vec3 outline;
     float thickness;
     uint albedo;
 });
@@ -17,5 +17,7 @@ void main() {
     float fw = fwidth(dist);
     float edge = smoothstep(MATERIAL.thickness - fw, MATERIAL.thickness + fw, dist);
 
-    out_color = mix(MATERIAL.outline, tex, edge);
+    vec4 outline = vec4(MATERIAL.outline, 1.0);
+
+    out_color = mix(outline, tex, edge);
 }

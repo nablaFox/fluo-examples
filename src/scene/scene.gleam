@@ -143,6 +143,11 @@ pub fn create_shape(
   add_model(scene, name, model, function.identity)
 }
 
+pub fn remove_model(scene: Scene(params), name: String) -> Scene(params) {
+  let models = dict.delete(scene.models, name)
+  Scene(..scene, models:)
+}
+
 pub fn translate(
   scene: Scene(params),
   model model_name: String,
