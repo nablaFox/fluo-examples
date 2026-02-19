@@ -17,7 +17,7 @@ const height = 800
 pub fn main() {
   let renderer =
     renderer.create_renderer(
-      vert: "shaders/default.vert",
+      vert: "default.vert",
       frag: "shader.frag",
       material: texture.create_from_color(color.white),
     )
