@@ -3,14 +3,16 @@ import fluo/mesh.{type Vec2, type Vec3}
 import fluo/texture
 import gleam/dict.{type Dict}
 import gleam/float
+import gleam/function
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import phong/phong.{type PhongMaterial, type PhongModel, PhongMaterial}
+import phong/phong.{type PhongMaterial, PhongMaterial}
+import scene/scene
 import shared/model
-import shared/transform
+import shared/transform.{type Transform}
 import simplifile
 
 type Obj {
@@ -37,7 +39,7 @@ type ObjMesh {
   )
 }
 
-pub fn load(path: String, transform: transform.Transform) -> PhongModel {
+pub fn load(path: String, transform: Transform) -> scene.SceneModel {
   let obj = load_obj(path)
 
   let mesh = load_meshes(obj)
@@ -63,11 +65,22 @@ pub fn load(path: String, transform: transform.Transform) -> PhongModel {
   model.Model(drawables, transform)
 }
 
+pub fn add_model(
+  scene: scene.Scene,
+  path path: String,
+  name name: String,
+  transform transform: Transform,
+) -> scene.Scene {
+  let model = load(path, transform)
+
+  scene.add_model(scene, name, model, function.identity)
+}
+
 fn load_drawables(
   allocate: mesh.Allocator,
   meshes: List(ObjMesh),
   materials: Dict(String, PhongMaterial),
-) -> List(phong.PhongDrawable) {
+) -> List(scene.SceneDrawable) {
   let default_material = phong.create_default_material()
 
   use obj <- list.map(meshes)

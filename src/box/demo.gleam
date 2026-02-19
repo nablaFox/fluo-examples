@@ -3,7 +3,7 @@ import fluo/geometry
 import fluo/renderer
 import fluo/window
 import gleam/int
-import phong/scene as phong_scene
+import phong/loader
 import scene/scene
 import shared/transform
 import shared/vector.{Vec3}
@@ -17,7 +17,7 @@ pub fn main() {
     let scale = 150.0
     let cell_size = 15.0
 
-    phong_scene.create(
+    scene.create(
       fov: 45.0,
       near: 0.1,
       far: 1000.0,
@@ -25,13 +25,14 @@ pub fn main() {
       camera_transform: transform.origin |> transform.translate_z(10.0),
       light_dir: Vec3(1.0, 1.0, 0.0),
       light_color: color.white,
-      ambient: color.multiply(color.white, 0.1),
+      ambient_color: color.multiply(color.white, 0.1),
+      spot_lights: [],
     )
     |> scene.add_shape(
       "room",
       geometry.cube,
       renderer.create_renderer(
-        vert: "phong.vert",
+        vert: "default.vert",
         frag: "grid.frag",
         material: #(
           color.white,
@@ -45,10 +46,10 @@ pub fn main() {
   }
 
   let scene =
-    scene
-    |> phong_scene.load_model(
+    loader.add_model(
+      scene,
       transform.origin,
-      name: "suzanne",
+      name: "car",
       path: "assets/suzanne.obj",
     )
 

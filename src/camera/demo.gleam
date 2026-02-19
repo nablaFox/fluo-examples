@@ -2,12 +2,11 @@ import camera/camera
 import fluo/color
 import fluo/geometry
 import fluo/key
-import fluo/renderer.{type Renderer}
-import fluo/texture.{type Texture}
+import fluo/renderer
+import fluo/texture
 import fluo/window.{drawer}
 import gleam/int
 import gleam/list
-import shared/matrix
 import shared/transform
 
 const width = 800
@@ -35,7 +34,7 @@ pub fn main() {
 
   let renderer =
     renderer.create_renderer(
-      vert: "shader.vert",
+      vert: "default.vert",
       frag: "outline.frag",
       material: #(color.black, 0.01, texture),
     )

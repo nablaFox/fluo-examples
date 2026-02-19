@@ -1,18 +1,27 @@
 layout (location = 0) in vec2 uv;
 layout (location = 2) in vec3 world_normal;
 
+const int MAX_POINT_LIGHTS = 16;
+
+struct SpotLight {
+    vec3 position;
+    vec3 direction;
+    float inner_cutoff;
+    float outer_cutoff; 
+};
+
+DEF_FRAME_PARAMS({
+    vec3 camera_pos;
+    vec3 ambient;
+    vec3 light_dir;
+    vec3 light_color;
+});
+
 DEF_MATERIAL({
   vec3 color;
   vec3 grid_color;
   float spacing;
   float thickness;
-});
-
-DEF_FRAME_PARAMS({
-    vec3 camera_pos;
-    vec3 light_dir;
-    vec3 light_color;
-    vec3 ambient;
 });
 
 void main() {
