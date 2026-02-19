@@ -29,7 +29,8 @@ pub type SceneFrameParams {
     camera_position: Vec3,
     ambient_color: Color,
     directional_light: DirectionalLight,
-    // spot_lights: List(SpotLight),
+    spot_lights_count: Int,
+    spot_lights: List(SpotLight),
   )
 }
 
@@ -93,13 +94,14 @@ pub fn create_frame_params(
 
   let directional_light = light.Light(direction: light_dir, color: light_color)
 
-  // create empty spotlights if the list is shorter than the max
+  assert spot_lights_count <= max_spotlights as "Too many spot lights"
 
   SceneFrameParams(
     camera_position:,
     directional_light:,
     ambient_color:,
-    // spot_lights: [],
+    spot_lights_count:,
+    spot_lights:,
   )
 }
 
@@ -266,4 +268,9 @@ pub fn translate_y(scene: Scene, model: String, y: Float) -> Scene {
 
 pub fn translate_z(scene: Scene, model: String, z: Float) -> Scene {
   translate(scene, model, 0.0, 0.0, z)
+}
+
+// will draw the current scene to screen
+pub fn display(scene: Scene, ctx: window.Context) {
+  todo
 }

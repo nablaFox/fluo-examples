@@ -15,6 +15,7 @@ DEF_FRAME_PARAMS({
     vec3 ambient;
     vec3 light_dir;
     vec3 light_color;
+    SpotLight spot_lights[MAX_POINT_LIGHTS];
 });
 
 DEF_MATERIAL({

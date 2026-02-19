@@ -7,6 +7,7 @@ const int MAX_POINT_LIGHTS = 16;
 struct SpotLight {
     vec3 position;
     vec3 direction;
+    vec3 color;
     float inner_cutoff;
     float outer_cutoff; 
 };
@@ -16,7 +17,8 @@ DEF_FRAME_PARAMS({
     vec3 ambient;
     vec3 light_dir;
     vec3 light_color;
-    // SpotLight spot_lights[MAX_POINT_LIGHTS];
+    uint spot_lights_count;
+    SpotLight spot_lights[MAX_POINT_LIGHTS];
 });
 
 DEF_MATERIAL({
