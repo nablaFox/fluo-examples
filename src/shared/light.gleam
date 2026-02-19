@@ -2,7 +2,7 @@ import fluo/color.{type Color}
 import shared/vector.{type Vec3}
 
 pub type DirectionalLight {
-  Light(direction: Vec3, color: Color)
+  DirectionalLight(direction: Vec3, color: Color)
 }
 
 pub type SpotLight {
@@ -12,5 +12,7 @@ pub type SpotLight {
     color: Color,
     inner_cutoff: Float,
     outer_cutoff: Float,
+    linear: Float,
+    quadratic: Float,
   )
 }

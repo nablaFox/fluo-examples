@@ -121,7 +121,8 @@ fn load_materials(
       "Ks " <> rest -> PhongMaterial(..mat, specular: parse_color(rest))
       "Ke " <> rest -> PhongMaterial(..mat, emissive: parse_color(rest))
       "illum " <> rest -> PhongMaterial(..mat, illum: parse_int(rest))
-      "Ns " <> rest -> PhongMaterial(..mat, shininess: parse_float(rest))
+      "Ns " <> rest ->
+        PhongMaterial(..mat, shininess: parse_float(rest) *. 128.0 /. 1000.0)
       "Ni " <> rest -> PhongMaterial(..mat, ior: parse_float(rest))
       "d " <> rest -> PhongMaterial(..mat, opacity: parse_float(rest))
       "Tf " <> rest -> PhongMaterial(..mat, transmission: parse_color(rest))

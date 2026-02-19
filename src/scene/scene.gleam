@@ -4,9 +4,11 @@ import fluo/geometry
 import fluo/mesh
 import fluo/renderer.{type Renderer}
 import fluo/window
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/function
+import gleam/int
 import gleam/list
+import gleam_community/maths.{cos, degrees_to_radians}
 import shared/light.{type DirectionalLight, type SpotLight}
 import shared/matrix
 import shared/model.{type Model}
@@ -14,6 +16,13 @@ import shared/transform.{type Transform}
 import shared/vector.{type Vec3}
 
 const max_spotlights = 16
+
+const default_ambient = color.Color(0.05, 0.05, 0.05)
+
+const default_light = light.DirectionalLight(
+  direction: vector.Vec3(0.0, 0.0, 0.0),
+  color: color.white,
+)
 
 pub type ModelMatrix =
   matrix.RawMatrix
@@ -27,10 +36,10 @@ pub type SceneDrawParams =
 pub type SceneFrameParams {
   SceneFrameParams(
     camera_position: Vec3,
-    ambient_color: Color,
-    directional_light: DirectionalLight,
-    spot_lights_count: Int,
-    spot_lights: List(SpotLight),
+    ambient: Color,
+    light: DirectionalLight,
+    spotlights_count: Int,
+    spotlights: List(SpotLight),
   )
 }
 
@@ -46,8 +55,10 @@ pub type SceneRenderer(material) =
 pub type Scene {
   Scene(
     camera: Camera,
-    params: SceneFrameParams,
-    models: dict.Dict(String, Model(SceneFrameParams, SceneDrawParams)),
+    models: Dict(String, Model(SceneFrameParams, SceneDrawParams)),
+    spotlights: Dict(String, SpotLight),
+    light: DirectionalLight,
+    ambient: Color,
   )
 }
 
@@ -56,21 +67,8 @@ pub fn create(
   near near: Float,
   far far: Float,
   aspect aspect: Float,
-  camera_transform camera_transform: Transform,
-  ambient_color ambient_color: Color,
-  light_dir light_dir: Vec3,
-  light_color light_color: Color,
-  spot_lights spot_lights: List(SpotLight),
+  spawn camera_transform: Transform,
 ) {
-  let params =
-    create_frame_params(
-      camera_position: transform.position(camera_transform),
-      light_dir: light_dir,
-      light_color: light_color,
-      ambient_color: ambient_color,
-      spot_lights: spot_lights,
-    )
-
   let camera =
     camera.create_camera(
       fov: fov,
@@ -80,28 +78,12 @@ pub fn create(
       aspect: aspect,
     )
 
-  Scene(camera, params, dict.new())
-}
-
-pub fn create_frame_params(
-  camera_position camera_position: Vec3,
-  light_dir light_dir: Vec3,
-  light_color light_color: Color,
-  ambient_color ambient_color: Color,
-  spot_lights spot_lights: List(SpotLight),
-) -> SceneFrameParams {
-  let spot_lights_count = list.length(spot_lights)
-
-  let directional_light = light.Light(direction: light_dir, color: light_color)
-
-  assert spot_lights_count <= max_spotlights as "Too many spot lights"
-
-  SceneFrameParams(
-    camera_position:,
-    directional_light:,
-    ambient_color:,
-    spot_lights_count:,
-    spot_lights:,
+  Scene(
+    camera:,
+    models: dict.new(),
+    spotlights: dict.new(),
+    light: default_light,
+    ambient: default_ambient,
   )
 }
 
@@ -122,10 +104,24 @@ pub fn draw_model(
   transformer transformer: fn(Transform) -> Transform,
   ctx ctx: window.Context,
 ) -> Scene {
-  let Scene(params:, models:, camera:) = scene
+  let Scene(camera:, light:, ambient:, spotlights:, models:) = scene
 
   let assert Ok(model) = dict.get(models, model_name)
     as { "Tried to draw model that does not exist: " <> model_name }
+
+  let spotlights = dict.values(spotlights)
+  let spotlights_count = list.length(spotlights)
+
+  let camera_position = camera.position(camera)
+
+  let params =
+    SceneFrameParams(
+      camera_position:,
+      light:,
+      ambient:,
+      spotlights_count:,
+      spotlights:,
+    )
 
   let viewproj = camera.viewproj |> list.flatten
 
@@ -204,6 +200,56 @@ pub fn create_shape(
 pub fn remove_model(scene: Scene, name: String) -> Scene {
   let models = dict.delete(scene.models, name)
   Scene(..scene, models:)
+}
+
+pub fn set_light_color(scene: Scene, color: Color) -> Scene {
+  Scene(..scene, light: light.DirectionalLight(..scene.light, color:))
+}
+
+pub fn set_light_direction(scene: Scene, direction: Vec3) -> Scene {
+  Scene(..scene, light: light.DirectionalLight(..scene.light, direction:))
+}
+
+pub fn add_spotlight(
+  scene: Scene,
+  name name: String,
+  color color: Color,
+  position position: Vec3,
+  direction direction: Vec3,
+  inner_cutoff inner_cutoff: Float,
+  outer_cutoff outer_cutoff: Float,
+  linear linear: Float,
+  quadratic quadratic: Float,
+) -> Scene {
+  let Scene(spotlights:, ..) = scene
+
+  assert dict.size(spotlights) < max_spotlights
+    as {
+      "Cannot add more than " <> int.to_string(max_spotlights) <> " spotlights"
+    }
+
+  let outer_cutoff = cos(degrees_to_radians(outer_cutoff))
+  let inner_cutoff = cos(degrees_to_radians(inner_cutoff))
+
+  let spotlight =
+    light.SpotLight(
+      position:,
+      direction:,
+      color:,
+      inner_cutoff:,
+      outer_cutoff:,
+      linear:,
+      quadratic:,
+    )
+
+  let spotlights = dict.insert(spotlights, name, spotlight)
+
+  Scene(..scene, spotlights:)
+}
+
+pub fn remove_spotlight(scene: Scene, name: String) -> Scene {
+  let spotlights = dict.delete(scene.spotlights, name)
+  Scene(..scene, spotlights:)
 }
 
 pub fn translate(
