@@ -1,10 +1,10 @@
 import fluo/color.{type Color}
 import fluo/geometry.{type Geometry}
 import fluo/mesh.{type Mesh}
-import fluo/renderer.{type Renderer}
+import fluo/renderer
 import fluo/texture.{type Texture}
 import gleam/option
-import scene/scene.{type SceneModel}
+import scene/scene.{type SceneModel, type SceneRenderer}
 import shared/matrix.{type RawMatrix}
 import shared/model
 import shared/transform.{type Transform}
@@ -31,7 +31,7 @@ pub type PhongDrawParams =
   #(RawMatrix, RawMatrix)
 
 pub type PhongRenderer =
-  Renderer(PhongMaterial, scene.SceneFrameParams, scene.SceneDrawParams)
+  SceneRenderer(PhongMaterial)
 
 pub fn create(
   mesh: Mesh,
