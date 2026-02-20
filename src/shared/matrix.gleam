@@ -53,3 +53,11 @@ pub fn scale(matrix: Matrix, scale: Float) -> Matrix {
 
   el *. scale
 }
+
+pub fn multiply_vec3(mat: Matrix, vec: vector.Vec3) -> vector.Vec3 {
+  vector.Vec3(
+    at(mat, 0, 0) *. vec.x +. at(mat, 0, 1) *. vec.y +. at(mat, 0, 2) *. vec.z,
+    at(mat, 1, 0) *. vec.x +. at(mat, 1, 1) *. vec.y +. at(mat, 1, 2) *. vec.z,
+    at(mat, 2, 0) *. vec.x +. at(mat, 2, 1) *. vec.y +. at(mat, 2, 2) *. vec.z,
+  )
+}

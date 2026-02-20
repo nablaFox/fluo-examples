@@ -59,6 +59,7 @@ pub type Scene {
     spotlights: Dict(String, SpotLight),
     light: DirectionalLight,
     ambient: Color,
+    transform: Transform,
   )
 }
 
@@ -67,19 +68,26 @@ pub fn create(
   near near: Float,
   far far: Float,
   aspect aspect: Float,
-  spawn camera_transform: Transform,
+  camera_transform camera_transform: Transform,
+  scene_transform scene_transform: Transform,
 ) {
   let camera =
     camera.create_camera(
       fov: fov,
       near: near,
       far: far,
-      transform: camera_transform,
+      transform: camera_transform
+        |> transform.translate(
+          scene_transform.x,
+          scene_transform.y,
+          scene_transform.z,
+        ),
       aspect: aspect,
     )
 
   Scene(
     camera:,
+    transform: scene_transform,
     models: dict.new(),
     spotlights: dict.new(),
     light: default_light,
@@ -104,7 +112,7 @@ pub fn draw_model(
   transformer transformer: fn(Transform) -> Transform,
   ctx ctx: window.Context,
 ) -> Scene {
-  let Scene(camera:, light:, ambient:, spotlights:, models:) = scene
+  let Scene(camera:, light:, ambient:, spotlights:, models:, ..) = scene
 
   let assert Ok(model) = dict.get(models, model_name)
     as { "Tried to draw model that does not exist: " <> model_name }
@@ -152,9 +160,12 @@ pub fn add_model(
   scene: Scene,
   name: String,
   model: Model(SceneFrameParams, SceneDrawParams),
-  transformer: fn(transform.Transform) -> Transform,
+  transform: Transform,
 ) -> Scene {
-  let transform = model.transform |> transformer
+  let transform =
+    transform
+    |> transform.combine(model.transform)
+    |> transform.combine(scene.transform)
 
   let model = model.Model(..model, transform:)
 
@@ -172,7 +183,7 @@ pub fn create_model(
 ) -> Scene {
   let model = model.create(mesh, renderer, transform)
 
-  add_model(scene, name, model, function.identity)
+  add_model(scene, name, model, transform)
 }
 
 pub fn add_shape(
@@ -180,10 +191,11 @@ pub fn add_shape(
   name: String,
   shape: geometry.Geometry,
   renderer: SceneRenderer(material),
-  transform: transform.Transform,
+  transform shape_transform: transform.Transform,
+  spawn scene_transform: transform.Transform,
 ) -> Scene {
-  let model = model.create(geometry.to_mesh(shape), renderer, transform)
-  add_model(scene, name, model, function.identity)
+  let model = model.create(geometry.to_mesh(shape), renderer, shape_transform)
+  add_model(scene, name, model, scene_transform)
 }
 
 pub fn create_shape(
@@ -191,10 +203,11 @@ pub fn create_shape(
   name: String,
   shape: geometry.Geometry,
   renderer: SceneRenderer(material),
-  transform: transform.Transform,
+  transform shape_transform: transform.Transform,
+  spawn scene_transform: transform.Transform,
 ) -> Scene {
-  let model = model.create_shape(shape, renderer, transform)
-  add_model(scene, name, model, function.identity)
+  let model = model.create_shape(shape, renderer, shape_transform)
+  add_model(scene, name, model, scene_transform)
 }
 
 pub fn remove_model(scene: Scene, name: String) -> Scene {
@@ -229,7 +242,20 @@ pub fn add_spotlight(
     }
 
   let outer_cutoff = cos(degrees_to_radians(outer_cutoff))
+
   let inner_cutoff = cos(degrees_to_radians(inner_cutoff))
+
+  let position =
+    vector.Vec3(
+      scene.transform.x +. position.x,
+      scene.transform.y +. position.y,
+      scene.transform.z +. position.z,
+    )
+
+  let direction =
+    scene.transform
+    |> transform.rot_matrix
+    |> matrix.multiply_vec3(direction)
 
   let spotlight =
     light.SpotLight(

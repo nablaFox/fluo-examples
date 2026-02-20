@@ -3,7 +3,6 @@ import fluo/mesh.{type Vec2, type Vec3}
 import fluo/texture
 import gleam/dict.{type Dict}
 import gleam/float
-import gleam/function
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -69,11 +68,12 @@ pub fn add_model(
   scene: scene.Scene,
   path path: String,
   name name: String,
-  transform transform: Transform,
+  transform model_transform: Transform,
+  spawn scene_transform: Transform,
 ) -> scene.Scene {
-  let model = load(path, transform)
+  let model = load(path, model_transform)
 
-  scene.add_model(scene, name, model, function.identity)
+  scene.add_model(scene, name, model, scene_transform)
 }
 
 fn load_drawables(

@@ -16,10 +16,16 @@ pub fn main() {
       near: 0.1,
       far: 100.0,
       aspect: int.to_float(width) /. int.to_float(height),
-      spawn: transform.origin |> transform.translate_z(10.0),
+      scene_transform: transform.origin,
+      camera_transform: transform.origin |> transform.translate_z(10.0),
     )
     |> scene.set_light_direction(vector.Vec3(0.5, 0.5, 0.0))
-    |> loader.add_model(transform.origin, name: "car", path: "assets/car.obj")
+    |> loader.add_model(
+      spawn: transform.origin,
+      transform: transform.origin,
+      name: "car",
+      path: "assets/car.obj",
+    )
 
   let window =
     window.create_window("Fluo Window", width, height, captured: True)

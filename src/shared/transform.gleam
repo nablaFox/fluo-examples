@@ -60,6 +60,10 @@ pub fn translate_z(transform: Transform, z: Float) -> Transform {
   transform |> translate(0.0, 0.0, z)
 }
 
+pub fn translate_all(transform: Transform, amount: Float) -> Transform {
+  transform |> translate(amount, amount, amount)
+}
+
 pub fn rotate_pitch(transform: Transform, deg_x: Float) -> Transform {
   transform |> rotate(deg_x, 0.0, 0.0)
 }
@@ -186,4 +190,21 @@ pub fn forward(transform: Transform) -> Vec3 {
 pub fn position(transform: Transform) -> Vec3 {
   let Transform(x, y, z, ..) = transform
   Vec3(x, y, z)
+}
+
+pub fn combine(base: Transform, child: Transform) -> Transform {
+  let rotated =
+    base
+    |> rot_matrix
+    |> matrix.multiply_vec3(Vec3(child.x, child.y, child.z))
+
+  Transform(
+    x: base.x +. rotated.x,
+    y: base.y +. rotated.y,
+    z: base.z +. rotated.z,
+    pitch: base.pitch +. child.pitch,
+    yaw: base.yaw +. child.yaw,
+    roll: base.roll +. child.roll,
+    scale: base.scale *. child.scale,
+  )
 }
