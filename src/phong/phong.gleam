@@ -3,8 +3,9 @@ import fluo/geometry.{type Geometry}
 import fluo/mesh.{type Mesh}
 import fluo/renderer
 import fluo/texture.{type Texture}
+import gleam/function
 import gleam/option
-import scene/scene.{type SceneModel, type SceneRenderer}
+import scene/scene.{type Scene, type SceneModel, type SceneRenderer}
 import shared/matrix.{type RawMatrix}
 import shared/model
 import shared/transform.{type Transform}
@@ -88,6 +89,17 @@ pub fn create_shape(
   let renderer = create_renderer(material)
 
   model.create(mesh, renderer, transform)
+}
+
+pub fn add_shape(
+  scene: Scene,
+  name: String,
+  shape: Geometry,
+  color: Color,
+  transform: Transform,
+) -> Scene {
+  let model = create_shape(shape, color, transform)
+  scene.add_model(scene, name, model, function.identity)
 }
 
 pub fn create_default_material() -> PhongMaterial {

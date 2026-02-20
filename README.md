@@ -8,7 +8,7 @@ Collection of demos built with [Fluo](https://github.com/nablaFox/Fluo), a funct
 
 source: [src/camera/demo.gleam](./src/camera/demo.gleam)
 
-### Blinn–Phong Shading
+### Blinn–Phong Model Rendering
 
 ![demo screenshot](./screenshots/phong.png)
 
